@@ -1,0 +1,5 @@
+---
+- name: gitlab_runner_restart
+  systemd:
+    name: "{{ gitlab_runner_service }}"
+    state: restarted

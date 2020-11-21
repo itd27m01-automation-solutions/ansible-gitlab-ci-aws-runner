@@ -1,0 +1,55 @@
+---
+- name: Install runner packages
+  apt:
+    name: "{{ gitlab_runner_packages }}"
+    state: present
+
+# Template config will be merged with actual registration command
+- name: Set Autoscaler template config
+  ansible.builtin.template:
+    dest: "{{ gitlab_runner_template_config }}"
+    src: config.template.toml.j2
+    owner: root
+    group: root
+    mode: '0600'
+
+# Uses Rails console command to list registered runners
+- name: Check runner registered
+  command:
+    cmd: "{{ gitlab_runner_list_cmd }}"
+  delegate_to: "{{ groups['app'][0] }}"
+  async: 300
+  poll: 20
+  register: gitlab_runner_list_result
+
+# There are two tokens - registration and runner tokens
+- name: Register runner
+  block:
+  - name: Cleanup current config
+    ansible.builtin.copy:
+      dest: "{{ gitlab_runner_config }}"
+      content: ''
+
+  - name: Get runner registration token
+    command:
+      cmd: "{{ gitlab_token_cmd }}"
+    delegate_to: "{{ groups['app'][0] }}"
+    async: 300
+    poll: 20
+    register: gitlab_runner_registration_token_result
+
+  - name: Set token fact for template
+    set_fact:
+      gitlab_runner_registration_token: "{{ gitlab_runner_registration_token_result.stdout }}"
+
+  - name: Register runner
+    command:
+      cmd: >-
+        {{ gitlab_runner_cmd }}
+        --name="{{ inventory_hostname }}"
+        --url="https://{{ gitlab_access_url }}"
+        --registration-token "{{ gitlab_runner_registration_token }}"
+        --template-config "{{ gitlab_runner_template_config }}"
+    notify:
+      - gitlab_runner_restart
+  when: gitlab_runner_list_result.stdout == ""

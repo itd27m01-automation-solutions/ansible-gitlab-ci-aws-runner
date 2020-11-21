@@ -1,0 +1,9 @@
+---
+- name: Install dependencies
+  apt:
+    name: "{{ gitlab_runner_dependencies }}"
+    state: present
+
+- import_tasks: docker_machine.yml
+- import_tasks: repos.yml
+- import_tasks: runner.yml

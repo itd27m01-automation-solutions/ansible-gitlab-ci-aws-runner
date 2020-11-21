@@ -1,0 +1,6 @@
+---
+- name: Download docker-machine
+  get_url:
+    url: "{{ gitlab_runner_docker_machine_url }}"
+    dest: /usr/bin/docker-machine
+    mode: '0770'

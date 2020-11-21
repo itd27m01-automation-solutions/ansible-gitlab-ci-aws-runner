@@ -1,0 +1,32 @@
+---
+gitlab_runner_dependencies:
+  - curl
+  - gnupg
+  - apt-transport-https
+  - ca-certificates
+  - tzdata
+
+gitlab_runner_packages:
+  - gitlab-runner
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+gitlab_runner_docker_machine_url: 'https://github.com/docker/machine/releases/download/v0.16.0/docker-machine-Linux-x86_64'
+
+gitlab_token_cmd: >-
+  /usr/bin/gitlab-rails runner -e production
+  "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+
+gitlab_runner_list_cmd: >-
+  /usr/bin/gitlab-rails runner -e production
+  "puts Ci::Runner.where(:description => '{{ inventory_hostname }}').first"
+
+gitlab_runner_template_config: '/etc/gitlab-runner/config.template.toml'
+gitlab_runner_config: '/etc/gitlab-runner/config.toml'
+gitlab_runner_service: 'gitlab-runner'
+
+gitlab_runner_cmd: >-
+  /usr/bin/gitlab-runner register
+  --non-interactive --request-concurrency="10" --executor="docker+machine"
+  --docker-image="alpine:latest" --locked="false" --access-level="not_protected"

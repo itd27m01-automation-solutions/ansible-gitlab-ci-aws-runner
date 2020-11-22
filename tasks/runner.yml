@@ -52,4 +52,4 @@
         --template-config "{{ gitlab_runner_template_config }}"
     notify:
       - gitlab_runner_restart
-  when: gitlab_runner_list_result.stdout == ""
+  when: not gitlab_runner_list_result.stdout
